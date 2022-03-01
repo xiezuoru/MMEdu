@@ -23,7 +23,7 @@ class MMClassification:
         self.checkpoint = './utils/moodels/ResNet/ResNet50.pth'
 
         self.backbone = backbone
-        backbone_path = os.path.join('./utils', self.backbone)
+        backbone_path = os.path.join('./utils/models', self.backbone)
         ckpt_cfg_list = list(os.listdir(backbone_path))
         for item in ckpt_cfg_list:
             if item[-1] == 'y':
@@ -38,9 +38,9 @@ class MMClassification:
         self.dataset_path = None
         self.lr = None
         self.backbonedict = {
-            "MobileNet": './utils/moodels/MobileNet/MobileNet.py',
-            "ResNet": './utils/moodels/ResNet/ResNet50.py',
-            'LeNet': './utils/moodels/LeNet/LeNet.py'
+            "MobileNet": './utils/models/MobileNet/MobileNet.py',
+            "ResNet": './utils/models/ResNet/ResNet50.py',
+            'LeNet': './utils/models/LeNet/LeNet.py'
             # 下略
         }
 
@@ -125,7 +125,7 @@ class MMClassification:
         checkpoint = self.checkpoint
         if is_trained:
             checkpoint = pretrain_model
-        model = init_model(self.config, checkpoint, device=device)
+        model = init_model(self.cfg, checkpoint, device=device)
         result = inference_model(model, img_array) # 此处的model和外面的无关,纯局部变量
         if show == True:
             show_result_pyplot(model, image, result)

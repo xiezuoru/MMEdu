@@ -1,3 +1,4 @@
+from turtle import back
 from utils.my_utils_new import MMClassification
 
 
@@ -10,27 +11,29 @@ def test1():
 
 def test2():
 	img = 'utils/demo/bird.JPEG'
-	model = MMClassification(pretrain='MobileNet', checkpoints='')
+	model = MMClassification(backbone='mobilenet')
 	result = model.inference(image=img)
 	print(result)
 
 
 def test3():
-	model = MMClassification()
-	model.load_dataset(path='cats_dogs_dataset', dataset_type='ImageNet')
-	model.train(epochs=20, device='cuda:0', validate=False, backbone="MobileNet")
+	# 刚刚查到mmcv不支持cfg回传保存成config,需要我们自己魔改,因此3被搁置
+	# 思路是3才会调用train,调用完了之后输出一个config.py文件,让学生自己保存到外面然后进行一次2的步骤.
+	model = MMClassification(backbone='mobilenet')
+	model.load_dataset(path='data/ImageNet')
+	model.train(epochs=20, device='cuda:0', validate=False)
 	model.inference(is_trained=True, image='./cats_dogs_dataset/test_set/test_set/cats/cat.4003.jpg')
 
 
 def test4():
-	model = MMClassification()
-	model.load_dataset(path='data/mnist', dataset_type='ImageNet')
-	model.train(epochs=1, device='cpu', validate=False, backbone="LeNet")
-	# model.inference(is_trained=True, image='./cats_dogs_dataset/test_set/test_set/cats/cat.4003.jpg')
+	model = MMClassification(backbone='lenet')
+	model.load_dataset(path='data/mnist')
+	model.train(epochs=1, device='cuda:0', validate=False)
+	# model.inference(is_trained=True, image='.x/cats_dogs_dataset/test_set/test_set/cats/cat.4003.jpg')
 
 
 if __name__ == "__main__":
 	# test1()
 	# test2()
-	# test3()
-	test4()
+	test3()
+	# test4()

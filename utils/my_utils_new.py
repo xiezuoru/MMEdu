@@ -9,62 +9,48 @@ from mmcls.datasets import build_dataset
 from mmcv.runner import load_checkpoint
 import os
 
-'''
- ToDo: 1.数据集种类选择
-       2.网络结构选择
-       3.是将mm系列包一起打包在内部, 还是外部下载
-       4.checkpoints应该归属到每个网络文件夹下
-       5.外部是否需要声明.pth还是我们预先帮他们下载好
-       6.文件目录需要调整
-       7.inference增加数据集选项
-'''
 
 class MMClassification:
     def __init__(self, 
-        backbone=None,
-        # config='./configs/mobilenet_v2/mobilenet.py',
-        pretrain='MobileNet',
-        checkpoints=None
-                 ):
+        backbone='mobilenet',
+        # dataset_type = 'ImageNet'
+        ):
 
-        # self.pretrain = pretrain
+        # self.backbone = backbone
         # 默认的config和checkpoints后续改为ResNet
         self.config = './utils/mobilenet/mobilenet.py'
         self.checkpoint = './utils/mobilenet/mobilenet.pth'
 
-        self.pretrain = os.path.join('./utils', pretrain)
-        ckpt_cfg_list = list(os.listdir(self.pretrain))
+        self.backbone = backbone
+        backbone_path = os.path.join('./utils', self.backbone)
+        ckpt_cfg_list = list(os.listdir(backbone_path))
         for item in ckpt_cfg_list:
             if item[-1] == 'y':
-                self.config = os.path.join(self.pretrain, item)
+                self.config = os.path.join(backbone_path, item)
             elif item[-1] == 'h':
-                self.checkpoint = os.path.join(self.pretrain, item)
+                self.checkpoint = os.path.join(backbone_path, item)
             else:
-                print("Warning!!! There is an unrecognized file in the pretrain folder.")
+                print("Warning!!! There is an unrecognized file in the backbone folder.")
 
         self.cfg = Config.fromfile(self.config)
         self.dataset_path = None
         self.lr = None
         self.backbonedict = {
-            "MobileNet": './utils/mobilenet/mobilenet.py',
+            "mobilenet": './utils/mobilenet/mobilenet.py',
             "ResNet": 'xxxxxx.py',
-            'LeNet': './utils/lenet/lenet5_mnist.py'
+            'lenet': './utils/lenet/lenet5_mnist.py'
             # 下略
         }
-        self.dataset_type_dict = {
-            "ImageNet": 'ImageNet',
-            "coco": 'CocoDataset',
-            "voc": 'VOCDataset',
-            "cifar": 'CIFAR10'
-            # 下略
-        }
+        # self.dataset_type = dataset_type
 
-    def train(self, random_seed=0, save_fold='./checkpoints', backbone="Resnet", distributed=False, validate=True, device="cpu",
+
+    def train(self, random_seed=0, save_fold='./checkpoints', distributed=False, validate=True, device="cpu",
               metric='accuracy', optimizer="SGD", epochs=100, lr=0.001, weight_decay=0.001):# 加config
 
         # 获取config信息
 
-        self.cfg = Config.fromfile(self.backbonedict[backbone])
+        self.cfg = Config.fromfile(self.backbonedict[self.backbone])
+        
         self.load_dataset(self.dataset_path)
         print("进行了cfg的切换")
             # 进行
@@ -125,7 +111,7 @@ class MMClassification:
             show_result_pyplot(model, image, result)
         return result
 
-    def load_dataset(self, path, dataset_type):
+    def load_dataset(self, path):
         self.dataset_path = path
 
         self.cfg.img_norm_cfg = dict(
@@ -134,28 +120,23 @@ class MMClassification:
             to_rgb=True
         )
 
-        self.cfg = Config.fromfile(self.dataset_type_dict[dataset_type])
-        # self.cfg.dataset_type = dataset_type
 
-        if self.dataset_type_dict == 'ImageNet':
-            self.cfg.data.train.data_prefix = path + '/training_set/training_set'
-            self.cfg.data.train.classes = path + '/classes.txt'
+        self.cfg.data.train.data_prefix = path + '/training_set/training_set'
+        self.cfg.data.train.classes = path + '/classes.txt'
 
-            self.cfg.data.val.data_prefix = path + '/val_set/val_set'
-            self.cfg.data.val.ann_file = path + '/val.txt'
-            self.cfg.data.val.classes = path + '/classes.txt'
+        self.cfg.data.val.data_prefix = path + '/val_set/val_set'
+        self.cfg.data.val.ann_file = path + '/val.txt'
+        self.cfg.data.val.classes = path + '/classes.txt'
 
-            self.cfg.data.test.data_prefix = path + '/test_set/test_set'
-            self.cfg.data.test.ann_file = path + '/test.txt'
-            self.cfg.data.test.classes = path + '/classes.txt'
-        
-
+        self.cfg.data.test.data_prefix = path + '/test_set/test_set'
+        self.cfg.data.test.ann_file = path + '/test.txt'
+        self.cfg.data.test.classes = path + '/classes.txt'
 
     # def print_configs(self):
-    #     if self.pretrain is None:
+    #     if self.backbone is None:
     #         model = "MobileNet"
     #     else:
-    #         model = self.pretrain
+    #         model = self.backbone
     #     print("当前网络结构：" + model)
     #     print("数据集路径：", self.dataset_path)
     #     print("学习率", self.lr)

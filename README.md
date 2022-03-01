@@ -1,4 +1,4 @@
 # MMEdu
-Education module for MMlab
+Education module for MMlab~
 
   

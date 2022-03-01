@@ -1,4 +1,4 @@
 # MMEdu
-Education module for OpenMMLab~
+Education module for OpenMMLab~~
 
   

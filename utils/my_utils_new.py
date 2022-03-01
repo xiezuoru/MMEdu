@@ -13,6 +13,7 @@ import os
 class MMClassification:
     def __init__(self, 
         backbone='mobilenet',
+        num_classes=-1
         # dataset_type = 'ImageNet'
         ):
 
@@ -33,6 +34,7 @@ class MMClassification:
                 print("Warning!!! There is an unrecognized file in the backbone folder.")
 
         self.cfg = Config.fromfile(self.config)
+
         self.dataset_path = None
         self.lr = None
         self.backbonedict = {
@@ -41,6 +43,9 @@ class MMClassification:
             'lenet': './utils/lenet/lenet5_mnist.py'
             # 下略
         }
+
+        self.num_classes = num_classes
+        # print(self.num_classes,"==================================\n")
         # self.dataset_type = dataset_type
 
 
@@ -50,7 +55,20 @@ class MMClassification:
         # 获取config信息
 
         self.cfg = Config.fromfile(self.backbonedict[self.backbone])
-        
+
+        # print(self.cfg.model.backbone.keys())
+        '''for lenet mnist, model.head
+        for mobilenet, model.backbone
+        crazy!!!!'''
+
+        # model_head = list(self.cfg.model.keys())[1]
+        # print(self.num_classes,"==================================\n")
+        if self.num_classes != -1:
+            if 'num_classes' in self.cfg.model.backbone.keys():
+                self.cfg.model.backbone.num_classes = self.num_classes
+            else:
+                self.cfg.model.head.num_classes = self.num_classes
+
         self.load_dataset(self.dataset_path)
         print("进行了cfg的切换")
             # 进行
@@ -96,15 +114,17 @@ class MMClassification:
             meta=dict()
         )
         
-    def inference(self, device='cpu', is_trained=False,
+    def inference(self, device='cpu',
+                 pretrain_model = './checkpoints/latest.pth',
+                 is_trained=False,
                 image=None, show=True):
-
+        print("========= begin inference ==========")
         model_fold = self.cfg.work_dir
         
         img_array = mmcv.imread(image)
         checkpoint = self.checkpoint
         if is_trained:
-            checkpoint = os.path.join(model_fold, 'latest.pth')
+            checkpoint = pretrain_model
         model = init_model(self.config, checkpoint, device=device)
         result = inference_model(model, img_array) # 此处的model和外面的无关,纯局部变量
         if show == True:
@@ -123,6 +143,7 @@ class MMClassification:
 
         self.cfg.data.train.data_prefix = path + '/training_set/training_set'
         self.cfg.data.train.classes = path + '/classes.txt'
+        # self.cfg.data.train.ann_file = path + '/train.txt'
 
         self.cfg.data.val.data_prefix = path + '/val_set/val_set'
         self.cfg.data.val.ann_file = path + '/val.txt'
